@@ -1,0 +1,29 @@
+SDL_CONFIG=/usr/x86_64-w64-mingw32/bin/sdl2-config
+CURL_CONFIG=/usr/x86_64-w64-mingw32/bin/curl-config
+CC=/usr/bin/x86_64-w64-mingw32-gcc
+DB_FLAGS=-I/usr/x86_64-w64-mingw32/include/mysql
+DB_LIBS=-lmariadbclient -lz -lssl -lcrypto -lws2_32 #-lssp #-lpthread -lm -lz -ldl
+CFLAGS=-std=c99  -Wall -Iinclude $(shell $(SDL_CONFIG) --cflags) $(DB_FLAGS) -g
+LDFLAGS=$(shell $(SDL_CONFIG) --static-libs) $(shell $(CURL_CONFIG) --libs) -lintl -liconv $(DB_LIBS) --static
+LDFLAGS:=$(filter-out -XCClinker,$(LDFLAGS))
+
+BIN:=typerite.exe
+SRC_DIR             :=  src
+SRC                 :=  $(wildcard $(SRC_DIR)/*.c)
+SRC		+=  $(wildcard $(SRC_DIR)/menu/*.c)
+MY_OBJ_DIR          :=  obj-win
+MY_OBJ              :=  $(SRC:$(SRC_DIR)/%.c=$(MY_OBJ_DIR)/%.o)
+
+all: build
+
+build: $(MY_OBJ)
+	$(CC) $^ $(LDFLAGS) -o $(BIN)
+
+$(MY_OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+test: build
+	wine ./$(BIN)
+
+clean:
+	rm $(MY_OBJ_DIR)/*

@@ -1,0 +1,36 @@
+SDL_CONFIG=sdl2-config
+CC=gcc
+CFLAGS=-std=c99 -Wall -Werror -Iinclude $(shell $(SDL_CONFIG) --cflags) $(shell mysql_config --cflags) -D_GNU_SOURCE=1 -g
+LDFLAGS=$(shell $(SDL_CONFIG) --libs) $(shell curl-config --libs) $(shell mysql_config --libs)
+
+BIN:=typerite
+SRC_DIR             :=  src
+SRC                 :=  $(wildcard $(SRC_DIR)/*.c)
+SRC					+=  $(wildcard $(SRC_DIR)/menu/*.c)
+MY_OBJ_DIR          :=  obj
+MY_OBJ              :=  $(SRC:$(SRC_DIR)/%.c=$(MY_OBJ_DIR)/%.o)
+
+all: header build test
+
+header:
+	@printf "%b\n" "Building for \e[1;37mLinux\e[0m"
+
+build: $(MY_OBJ)
+	printf "%b\n" " - Linking \e[0;36m$(BIN)\e[0m"
+	$(CC) $^ $(LDFLAGS) -o $(BIN)
+
+$(MY_OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	printf "%b\n" " - Compiling \e[0;32m$<\e[0m"
+	$(CC) $(CFLAGS) -c $< -o $@
+
+test: build
+	@printf "%b\n" " + Running \e[1;35m./$(BIN)\e[0m"
+	@echo "==================================="
+	@./$(BIN)
+	@echo "==================================="
+
+debug: build
+	gdb -ex run $(BIN)
+
+clean:
+	-rm -f $(MY_OBJ_DIR)/*
